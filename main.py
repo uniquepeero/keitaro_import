@@ -8,8 +8,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 from time import sleep
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-fh = logging.FileHandler("logs.log", 'w', encoding="utf-8")
+log.setLevel(logging.INFO)
+fh = logging.FileHandler("logs.log", encoding="utf-8")
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
 log.addHandler(fh)

@@ -80,7 +80,7 @@ def main():
 
 	sheet.clear()
 	sleep(1)
-	sheet.update_cell(6, 1, 'Parameters:TimeZone=+0000;')
+	sheet.update_cell(6, 1, f'Parameters:TimeZone={config["Google"]["TIMEZONE"]};')
 	sleep(1)
 	sheet.insert_row(['Google Click ID', 'Conversion Name', 'Conversion Time', 'Conversion Value', 'Conversion Currency'], 7)
 	sleep(1)

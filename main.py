@@ -1,24 +1,29 @@
-import requests
+import configparser
 import json
 import logging
-import configparser
 import os
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from time import sleep
+
+import gspread
+import requests
+from oauth2client.service_account import ServiceAccountCredentials
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-fh = logging.FileHandler("logs.log", encoding="utf-8")
+fh = logging.FileHandler('logs.log', 'w', encoding="utf-8")
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
 log.addHandler(fh)
 
+
+config = configparser.ConfigParser()
+
+
 class Keitaro:
 	APIKEY = ''
 	URL = ''
+
 	def __init__(self):
-		config = configparser.ConfigParser()
 		if os.path.isfile('config.ini'):
 			config.read('config.ini')
 			self.APIKEY = config['Keitaro']['APIKEY']
@@ -26,13 +31,12 @@ class Keitaro:
 		else:
 			log.error('Configuration file not found')
 
-
-	def conversions(self, range):
+	def conversions(self, interval):
 		headers = {
 			'Api-Key': self.APIKEY
 		}
 		payload = {
-			'range': {'interval': range},
+			'range': {'interval': interval},
 			'columns': ['sub_id_6', 'postback_datetime', 'status']
 		}
 		try:
@@ -41,9 +45,8 @@ class Keitaro:
 				return res.json()
 			else:
 				log.error(f'Conversions error code: {res.status_code} / Message: {res.json()}')
-		except Exception as e:
+		except Exception:
 			log.critical('Request conversions', exc_info=True)
-
 
 	def reportfields(self):
 		headers = {
@@ -52,19 +55,24 @@ class Keitaro:
 		return requests.get(f'{self.URL}/admin_api/v1/report/definition', headers=headers).json()
 
 
+def _find_json():
+	for file in os.listdir('.'):
+		if file.endswith('.json'):
+			return file
+	return None
+
+
 def main():
 	ktr = Keitaro()
-	#log.debug(f'Today Leads:\n{ktr.conversions("today")}')
 
-	# List with dict's objects
 	leads = ktr.conversions("today")['rows']
 	log.info(f'Found {len(leads)} conversions')
 
 	try:
 		scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-		creds = ServiceAccountCredentials.from_json_keyfile_name('sheets_secret.json', scope)
+		creds = ServiceAccountCredentials.from_json_keyfile_name(_find_json(), scope)
 		client = gspread.authorize(creds)
-		sheet = client.open('Keitaro To Ads Import').sheet1
+		sheet = client.open(config['Google']['SHEET_NAME']).sheet1
 		sleep(2)
 	except Exception:
 		log.error(f'Google Sheets opening: ', exc_info=True)
